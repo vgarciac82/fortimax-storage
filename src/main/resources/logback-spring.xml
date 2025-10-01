@@ -1,56 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-	<property name="LOGS" value="/log" />
+    <property name="LOGS_DIR" value="/var/log/services" />
+    <property name="APP_LOG_NAME" value="spring-app" />
+    <property name="HIBERNATE_LOG_NAME" value="hibernate-sql" />
+
 	<include
 		resource="org/springframework/boot/logging/logback/defaults.xml" />
 
 	<appender name="Console"
 		class="ch.qos.logback.core.ConsoleAppender">
-
 		<layout class="ch.qos.logback.classic.PatternLayout">
 			<pattern>${CONSOLE_LOG_PATTERN}</pattern>
 		</layout>
-
 	</appender>
 
-	<appender name="RollingFile"
+	<appender name="RollingFileApp"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>${LOGS}/storage.log</file>
+		<file>${LOGS_DIR}/${APP_LOG_NAME}.log</file>
 		<encoder
 			class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<Pattern>%d{dd-MMM-yyyy HH:mm:ss} [STORAGE] %p: %c{1} - %m%n
-			</Pattern>
+			<Pattern>%d{dd-MMM-yyyy HH:mm:ss.SSS} [%thread] [${APP_LOG_NAME}] %-5level %logger{36} - %msg%n</Pattern>
 		</encoder>
+
 		<rollingPolicy
-			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<!-- rollover daily and when the file reaches 10 MegaBytes -->
-			<fileNamePattern>${LOGS}/archived/STORAGE-%d{yyyy-MM-dd}.%i.log
-			</fileNamePattern>
-			<timeBasedFileNamingAndTriggeringPolicy
-				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-				<maxFileSize>150MB</maxFileSize>
-			</timeBasedFileNamingAndTriggeringPolicy>
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${LOGS_DIR}/archived/${APP_LOG_NAME}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxFileSize>100MB</maxFileSize>
+			<maxHistory>7</maxHistory>
+			<totalSizeCap>1GB</totalSizeCap>
 		</rollingPolicy>
 	</appender>
 
-	<!-- LOG everything at INFO level -->
-	<root level="debug">
-		<appender-ref ref="RollingFile" />
+	<appender name="RollingFileHibernate"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOGS_DIR}/${HIBERNATE_LOG_NAME}.log</file>
+		<encoder
+			class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>%d{dd-MMM-yyyy HH:mm:ss.SSS} [%thread] [${HIBERNATE_LOG_NAME}] %-5level %logger{36} - %msg%n</Pattern>
+		</encoder>
+
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>${LOGS_DIR}/archived/${HIBERNATE_LOG_NAME}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxFileSize>100MB</maxFileSize>
+			<maxHistory>7</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+		</rollingPolicy>
+	</appender>
+
+	<logger name="org.hibernate.SQL" level="DEBUG"
+		additivity="false">
+		<appender-ref ref="RollingFileHibernate" />
+		<appender-ref ref="Console" />
+	</logger>
+    
+    <logger name="net.sf.jasperreports.engine" level="DEBUG"
+		additivity="false">
+		<appender-ref ref="RollingFileApp" />
+		<appender-ref ref="Console" />
+	</logger>
+
+	<root level="DEBUG">
+		<appender-ref ref="RollingFileApp" />
 		<appender-ref ref="Console" />
 	</root>
-
-	<logger name="net.sf.jasperreports.engine" level="debug"
-		additivity="false">
-		<appender-ref ref="RollingFile" />
-		<appender-ref ref="Console" />
-	</logger>
-
-	<logger name="org.hibernate.SQL" level="debug"
-		additivity="false">
-		<appender-ref ref="RollingFile" />
-		<appender-ref ref="Console" />
-
-	</logger>
 
 </configuration>
