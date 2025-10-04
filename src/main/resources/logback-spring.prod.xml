@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<!-- Propiedades de directorios y nombres de archivos de log -->
+<property name="LOGS_DIR" value="/var/log/services" />
+<property name="APP_LOG_NAME" value="spring-app" />
+<property name="HIBERNATE_LOG_NAME" value="hibernate-sql" />
+
+	<!-- Incluimos los defaults de Spring Boot para las variables de entorno, etc. -->
+<include
+	resource="org/springframework/boot/logging/logback/defaults.xml" />
+
+	<!-- 
+    Appender para los logs principales de la aplicación.
+    Utiliza rotación basada en tamaño y tiempo para manejar un alto volumen.
+	-->
+<appender name="RollingFileApp"
+	class="ch.qos.logback.core.rolling.RollingFileAppender">
+	<file>${LOGS_DIR}/${APP_LOG_NAME}.log</file>
+	<encoder
+		class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+		<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [${APP_LOG_NAME}] %-5level %logger{36} - %msg%n</Pattern>
+	</encoder>
+
+	<rollingPolicy
+		class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- 
+            Rotación diaria (%d{yyyy-MM-dd}) con índice de tamaño (%i). 
+            Ejemplo: spring-app-2025-05-20.1.log
+        -->
+		<fileNamePattern>${LOGS_DIR}/archived/${APP_LOG_NAME}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+		<maxFileSize>100MB</maxFileSize>
+		<maxHistory>90</maxHistory>
+		<totalSizeCap>20GB</totalSizeCap>
+	</rollingPolicy>
+</appender>
+
+	 
+<appender name="RollingFileHibernate"
+	class="ch.qos.logback.core.rolling.RollingFileAppender">
+	<file>${LOGS_DIR}/${HIBERNATE_LOG_NAME}.log</file>
+	<encoder
+		class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+		<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [${HIBERNATE_LOG_NAME}] %-5level %logger{36} - %msg%n</Pattern>
+	</encoder>
+
+	<rollingPolicy
+		class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+		<fileNamePattern>${LOGS_DIR}/archived/${HIBERNATE_LOG_NAME}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+		<maxFileSize>100MB</maxFileSize>
+		<maxHistory>90</maxHistory>
+		<totalSizeCap>20GB</totalSizeCap>
+	</rollingPolicy>
+</appender>
+
+	<!-- Configuración del logger de Hibernate SQL -->
+<logger name="org.hibernate.SQL" level="DEBUG"
+	additivity="false">
+	<appender-ref ref="RollingFileHibernate" />
+</logger>
+
+	<!-- Configuración del logger de JasperReports (mantenido con DEBUG si es necesario) -->
+<logger name="net.sf.jasperreports.engine" level="DEBUG"
+	additivity="false">
+	<appender-ref ref="RollingFileApp" />
+</logger>
+
+	<!-- Nivel de log por defecto para toda la aplicación (ROOT) -->
+<root level="INFO">
+		<!-- 
+        Cambiado el nivel a INFO.
+        Si necesitas debug en producción, puedes cambiarlo temporalmente,
+        pero INFO es el estándar para minimizar el volumen de logs.
+    -->
+	<appender-ref ref="RollingFileApp" />
+</root>
+
+</configuration>
